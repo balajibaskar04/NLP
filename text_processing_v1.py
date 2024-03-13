@@ -6,6 +6,7 @@ import glob
 import os
 from sklearn.model_selection import train_test_split
 from gensim.models import Word2Vec
+import numpy as np
 
 
 # Download NLTK data (you only need to do this once)
@@ -44,29 +45,59 @@ def Text_processing(text, folder):
 
     # TOKENIZATION
     words = word_tokenize(contractions_word)
+    #words_str = ' '.join(words)
 
-    # snowball stemmer
+    #snowball stemmer
     language = 'english'
     snowball_stemmer = SnowballStemmer(language)
     stemmed_words = [snowball_stemmer.stem(word) for word in words]
     stemmed_text = ''.join(stemmed_words)
-    lst_x_values.append(stemmed_text)
-    lst_y_values.append(folder)
+    # lst_x_values.append(stemmed_text)
+    # lst_y_values.append(folder)
 
-    data = [stemmed_text, folder]
-    # Train the Skip-gram Word2Vec model
-    model = Word2Vec(sentences=data, vector_size=100, window=5, sg=1, min_count=1, workers=4)
-    #print("*******************", model)
+    def load_embeddings(file_path):
+        embeddings = {}
+        with open(file_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                values = line.split()
+                word = values[0]
+                vector = np.asarray(values[1:], dtype='float32')
+                embeddings[word] = vector
+        return embeddings
 
-    # Example of accessing word vectors
-    word_vectors = model.wv
-    print("^^^^^^^^^", word_vectors)
-    if 'stemmed_text' in word_vectors and 'folder' in word_vectors:
-        vector_x = word_vectors['x']
-        vector_y = word_vectors['y']
-    else:
-        print("One or both of the words 'x' and 'y' are not in the vocabulary.")
-        pass
+    #golve
+    glove_embeddings_path = r'C:\Users\balaji_baskar\Downloads\glove.6B\glove.6B.100d.txt'  # Adjust the path to your downloaded GloVe file
+    glove_embeddings = load_embeddings(glove_embeddings_path)
+
+    for word, folder_name in zip(stemmed_text, folder):
+
+        if word in glove_embeddings and folder_name in glove_embeddings:
+            embedding_word = glove_embeddings[word]
+            embedding_folder_name = glove_embeddings[folder_name]
+
+
+            print(f"Embedding for '{word}{folder_name}': {embedding_word} {embedding_folder_name}")
+        else:
+            print(f"'{word}' not found in embeddings")
+
+
+
+
+    #
+    # data = [stemmed_text, folder]
+    # # Train the Skip-gram Word2Vec model
+    # model = Word2Vec(sentences=data, vector_size=100, window=5, sg=1, min_count=1, workers=4)
+    # #print("*******************", model)
+    #
+    # # Example of accessing word vectors
+    # word_vectors = model.wv
+    # print("^^^^^^^^^", word_vectors)
+    # if 'stemmed_text' in word_vectors and 'folder' in word_vectors:
+    #     vector_x = word_vectors['x']
+    #     vector_y = word_vectors['y']
+    # else:
+    #     print("One or both of the words 'x' and 'y' are not in the vocabulary.")
+    #     pass
     # vector_x = word_vectors[stemmed_text]
     # vector_y = word_vectors[folder]
     # #
@@ -101,6 +132,7 @@ for folder in folders:
         with open(file_content_1, 'r') as f:
             text = f.read()
             Text_processing(text, folder)
+            #print(lst_x_values,lst_y_values )
 
 
 
